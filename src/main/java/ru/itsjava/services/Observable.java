@@ -6,4 +6,5 @@ public interface Observable {
     void deleteObserver (Observer observer);
 
     void notifyObserver (String message);
+
 }

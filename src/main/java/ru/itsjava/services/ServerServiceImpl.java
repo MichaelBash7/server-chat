@@ -3,6 +3,8 @@ package ru.itsjava.services;
 import lombok.SneakyThrows;
 
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -39,8 +41,10 @@ public class ServerServiceImpl implements ServerService{
 
     @Override
     public void notifyObserver(String message) {
-        for (Observer observer: observers){
+        for (Observer observer : observers) {
             observer.notifyMe(message);
+
         }
+
     }
 }
