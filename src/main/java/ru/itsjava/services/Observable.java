@@ -7,4 +7,6 @@ public interface Observable {
 
     void notifyObserver (String message);
 
+    void notifyObserversExceptMe (String message, Observer observerWithoutMessage);
+
 }

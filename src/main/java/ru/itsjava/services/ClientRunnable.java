@@ -2,7 +2,10 @@ package ru.itsjava.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import ru.itsjava.dao.UserDao;
+import ru.itsjava.dao.UserDaoImpl;
 import ru.itsjava.domain.User;
+import ru.itsjava.utils.Props;
 
 import java.io.*;
 import java.net.Socket;
@@ -12,6 +15,7 @@ public class ClientRunnable implements Runnable, Observer {
     private final Socket socket;
     private final ServerService serverService;
     private User user;
+    private final UserDao userDao;
 
 
     @SneakyThrows
@@ -24,7 +28,7 @@ public class ClientRunnable implements Runnable, Observer {
             serverService.addObserver(this);
             while ((messageFromClient = bufferedReader.readLine()) != null) {
                 System.out.println(user.getName() + ":" + messageFromClient);
-                serverService.notifyObserver(user.getName() + ":" + messageFromClient);
+                serverService.notifyObserversExceptMe(user.getName() + ":" + messageFromClient, this);
 
             }
         }
@@ -38,13 +42,26 @@ public class ClientRunnable implements Runnable, Observer {
             if (authorizationMessage.startsWith("!autho!")) {
                 String login = authorizationMessage.substring(7).split(":")[0];
                 String password = authorizationMessage.substring(7).split(":")[1];
-                user = new User(login,password);
+                user = userDao.findByNameAndPassword(login, password);
                 return true;
             }
         }
         return false;
     }
-
+    @SneakyThrows
+    private boolean registration(BufferedReader bufferedReader) {
+        String registrationMessage;
+        while ((registrationMessage = bufferedReader.readLine()) != null) {
+            //!reg!login:password
+            if (registrationMessage.startsWith("!reg!")) {
+                String regLogin = registrationMessage.substring(5).split(":")[0];
+                String regPassword = registrationMessage.substring(5).split(":")[1];
+                user = userDao.addUser(regLogin, regPassword);
+                return true;
+            }
+        }
+        return false;
+    }
     @SneakyThrows
     @Override
     public void notifyMe(String message) {
