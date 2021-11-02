@@ -25,9 +25,10 @@ public class ClientRunnable implements Runnable, Observer {
         System.out.println("Client connected");
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        if (authorization(bufferedReader)) {
+        String clientMessage = bufferedReader.readLine();
+        if (authorization(clientMessage)) {
             serverService.addObserver(this);
-        } else if (registration(bufferedReader)) {
+        } else if (registration(clientMessage)) {
             serverService.addObserver(this);
         } else {
             throw new InputMismatchException("Input error!");
@@ -40,9 +41,8 @@ public class ClientRunnable implements Runnable, Observer {
     }
 
     @SneakyThrows
-    private boolean authorization(BufferedReader bufferedReader) {
-        String authorizationMessage;
-        if ((authorizationMessage = bufferedReader.readLine()) != null && authorizationMessage.startsWith("!autho!")) {
+    private boolean authorization(String authorizationMessage) {
+        if (authorizationMessage.startsWith("!autho!")) {
             //!autho!login:password
             String login = authorizationMessage.substring(7).split(":")[0];
             String password = authorizationMessage.substring(7).split(":")[1];
@@ -52,9 +52,8 @@ public class ClientRunnable implements Runnable, Observer {
         return false;
     }
     @SneakyThrows
-    private boolean registration(BufferedReader bufferedReader) {
-        String registrationMessage;
-        if ((registrationMessage = bufferedReader.readLine()) != null && registrationMessage.startsWith("!reg!")) {
+    private boolean registration(String registrationMessage) {
+        if (registrationMessage.startsWith("!reg!")) {
             //!reg!login:password
             String regLogin = registrationMessage.substring(5).split(":")[0];
             String regPassword = registrationMessage.substring(5).split(":")[1];
