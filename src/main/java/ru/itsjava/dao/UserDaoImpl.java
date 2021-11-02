@@ -44,11 +44,14 @@ public class UserDaoImpl implements UserDao {
                 props.getValue("db.password"));
         ) {
             PreparedStatement preparedStatement = connection
-                    .prepareStatement("insert into myprojectusers values (?, ?);");
+                    .prepareStatement("insert into schema_online_course.myprojectusers (name, password) values (?, ?);");
             preparedStatement.setString(1, name);
             preparedStatement.setString(2, password);
 
-            preparedStatement.executeUpdate();
+            int addUserResult = preparedStatement.executeUpdate();
+            if (addUserResult > 0){
+                return new User(name, password);
+            }
 
         }
         catch (SQLException throwables) {

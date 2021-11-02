@@ -9,6 +9,7 @@ import ru.itsjava.utils.Props;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.InputMismatchException;
 
 @RequiredArgsConstructor
 public class ClientRunnable implements Runnable, Observer {
@@ -23,45 +24,46 @@ public class ClientRunnable implements Runnable, Observer {
     public void run() {
         System.out.println("Client connected");
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        String messageFromClient;
-        if (authorization(bufferedReader)){
-            serverService.addObserver(this);
-            while ((messageFromClient = bufferedReader.readLine()) != null) {
-                System.out.println(user.getName() + ":" + messageFromClient);
-                serverService.notifyObserversExceptMe(user.getName() + ":" + messageFromClient, this);
 
-            }
+        if (authorization(bufferedReader)) {
+            serverService.addObserver(this);
+        } else if (registration(bufferedReader)) {
+            serverService.addObserver(this);
+        } else {
+            throw new InputMismatchException("Input error!");
+        }
+        String messageFromClient;
+        while ((messageFromClient = bufferedReader.readLine()) != null) {
+            System.out.println(user.getName() + ":" + messageFromClient);
+            serverService.notifyObserversExceptMe(user.getName() + ":" + messageFromClient, this);
         }
     }
 
     @SneakyThrows
     private boolean authorization(BufferedReader bufferedReader) {
         String authorizationMessage;
-        while ((authorizationMessage = bufferedReader.readLine()) != null) {
+        if ((authorizationMessage = bufferedReader.readLine()) != null && authorizationMessage.startsWith("!autho!")) {
             //!autho!login:password
-            if (authorizationMessage.startsWith("!autho!")) {
-                String login = authorizationMessage.substring(7).split(":")[0];
-                String password = authorizationMessage.substring(7).split(":")[1];
-                user = userDao.findByNameAndPassword(login, password);
-                return true;
-            }
+            String login = authorizationMessage.substring(7).split(":")[0];
+            String password = authorizationMessage.substring(7).split(":")[1];
+            user = userDao.findByNameAndPassword(login, password);
+            return true;
         }
         return false;
     }
     @SneakyThrows
     private boolean registration(BufferedReader bufferedReader) {
         String registrationMessage;
-        while ((registrationMessage = bufferedReader.readLine()) != null) {
+        if ((registrationMessage = bufferedReader.readLine()) != null && registrationMessage.startsWith("!reg!")) {
             //!reg!login:password
-            if (registrationMessage.startsWith("!reg!")) {
-                String regLogin = registrationMessage.substring(5).split(":")[0];
-                String regPassword = registrationMessage.substring(5).split(":")[1];
-                user = userDao.addUser(regLogin, regPassword);
-                return true;
-            }
+            String regLogin = registrationMessage.substring(5).split(":")[0];
+            String regPassword = registrationMessage.substring(5).split(":")[1];
+            user = userDao.addUser(regLogin, regPassword);
+            return true;
         }
         return false;
     }
+
     @SneakyThrows
     @Override
     public void notifyMe(String message) {
