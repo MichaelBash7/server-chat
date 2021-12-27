@@ -2,14 +2,20 @@ package ru.itsjava.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import ru.itsjava.dao.MessageDao;
 import ru.itsjava.dao.UserDao;
 import ru.itsjava.dao.UserDaoImpl;
+import ru.itsjava.domain.Message;
 import ru.itsjava.domain.User;
 import ru.itsjava.utils.Props;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 @RequiredArgsConstructor
 public class ClientRunnable implements Runnable, Observer {
@@ -17,6 +23,7 @@ public class ClientRunnable implements Runnable, Observer {
     private final ServerService serverService;
     private User user;
     private final UserDao userDao;
+    private final MessageDao messageDao;
 
 
     @SneakyThrows
@@ -35,6 +42,20 @@ public class ClientRunnable implements Runnable, Observer {
         }
         String messageFromClient;
         while ((messageFromClient = bufferedReader.readLine()) != null) {
+            if (messageFromClient.contentEquals("history")) {
+                List<Message> messageList = messageDao.lastFifteenMessagesHistory();
+                StringBuilder sb = new StringBuilder();
+                for (Message message : messageList) {
+                    sb.append(message.toString()).append(' ');
+                }
+
+                notifyMe(sb.toString());
+
+//                String listString = messageList.stream().map(Object::toString).
+//                        collect(Collectors.joining(", "));
+//                this.notifyMe(listString);
+            } else
+                messageDao.addMessage(user.getName(), "All", messageFromClient);
             System.out.println(user.getName() + ":" + messageFromClient);
             serverService.notifyObserversExceptMe(user.getName() + ":" + messageFromClient, this);
         }
@@ -51,6 +72,7 @@ public class ClientRunnable implements Runnable, Observer {
         }
         return false;
     }
+
     @SneakyThrows
     private boolean registration(String registrationMessage) {
         if (registrationMessage.startsWith("!reg!")) {
